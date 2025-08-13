@@ -1,20 +1,29 @@
-FROM node:16.15.1
+# Use Node 18 as the base image
+FROM node:18
 
-MAINTAINER Opstree Solutions
+# Set working directory
+WORKDIR /app
 
-COPY . /app
+# Copy package.json and package-lock.json first for caching
+COPY package*.json ./
 
-WORKDIR /app/
+# Install dependencies
+RUN npm install
 
-RUN apt-get update -y && \
-    apt-get install git -y
+# Copy the full source code
+COPY . .
 
-RUN npm install 
+# Fix: Set legacy OpenSSL provider for Webpack compatibility
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
+# Build the application
 RUN npm run build
 
+# Install serve globally to serve the production build
 RUN yarn global add serve
 
+# Expose the default port
 EXPOSE 3000
 
-ENTRYPOINT ["serve", "-s", "build"]
+# Command to serve the build
+CMD ["serve", "-s", "build", "-l", "3000"]
